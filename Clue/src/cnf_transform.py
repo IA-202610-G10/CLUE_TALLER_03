@@ -59,20 +59,38 @@ def eliminate_iff(formula: Formula) -> Formula:
           Para cada tipo, aplica eliminate_iff recursivamente a los operandos,
           y solo transforma cuando encuentras un Iff.
     """
+    #Version Original
+    #if isinstance(formula, Iff):
+       # left_rec = eliminate_iff(formula.left)
+        #right_rec = eliminate_iff(formula.right)
+       # return And(Implies(left_rec, right_rec), Implies(right_rec, left_rec))
+    #elif isinstance(formula, Implies):
+       # return Implies(eliminate_iff(formula.antecedent), eliminate_iff(formula.consequent))
+    #elif isinstance(formula, And):
+        #return And(*(eliminate_iff(c) for c in formula.conjuncts))
+    #elif isinstance(formula, Or):
+        #return Or(*(eliminate_iff(d) for d in formula.disjuncts))
+    #elif isinstance(formula, Not):
+        #return Not(eliminate_iff(formula.operand))
+    #return formula
+    
+    #Version final 
+    #Prompt: Segun lo que pide el taller y sin cambiar su funcionalidad,
+    #como optimizarias este codigo?
     if isinstance(formula, Iff):
-        left_rec = eliminate_iff(formula.left)
-        right_rec = eliminate_iff(formula.right)
-        return And(Implies(left_rec, right_rec), Implies(right_rec, left_rec))
-    elif isinstance(formula, Implies):
-        return Implies(eliminate_iff(formula.antecedent), eliminate_iff(formula.consequent))
-    elif isinstance(formula, And):
-        return And(*(eliminate_iff(c) for c in formula.conjuncts))
-    elif isinstance(formula, Or):
-        return Or(*(eliminate_iff(d) for d in formula.disjuncts))
-    elif isinstance(formula, Not):
+        left = eliminate_iff(formula.left)
+        right = eliminate_iff(formula.right)
+        return And(Implies(left, right), Implies(right, left))
+
+    if isinstance(formula, Implies):
+        return Implies( eliminate_iff(formula.antecedent),eliminate_iff(formula.consequent))
+    if isinstance(formula, And):
+        return And(*[eliminate_iff(c) for c in formula.conjuncts])
+    if isinstance(formula, Or):
+        return Or(*[eliminate_iff(d) for d in formula.disjuncts])
+    if isinstance(formula, Not):
         return Not(eliminate_iff(formula.operand))
     return formula
-
 
 def eliminate_implication(formula: Formula) -> Formula:
     """
@@ -166,18 +184,41 @@ def distribute_or_over_and(formula: Formula) -> Formula:
     Nota: Esta funcion se llama DESPUES de mover negaciones hacia adentro,
           asi que solo veras Atom, Not(Atom), And y Or.
     """
+    #Version original
+    #if isinstance(formula, And):
+        #return And(*(distribute_or_over_and(c) for c in formula.conjuncts))
+    #elif isinstance(formula, Or):
+        #disjuncts = [distribute_or_over_and(d) for d in formula.disjuncts]
+        #for i, d in enumerate(disjuncts):
+            #if isinstance(d, And):
+                #rest = disjuncts[:i] + disjuncts[i+1:]
+                #A = rest[0] if len(rest) == 1 else Or(*rest)
+                #new_conjuncts = [distribute_or_over_and(Or(A, c)) for c in d.conjuncts]
+               # return And(*new_conjuncts)
+        #return Or(*disjuncts)
+    #elif isinstance(formula, Not):
+       # return Not(distribute_or_over_and(formula.operand))
+    #return formula
+    
+    #Version final
+    #Prompt:Segun lo que pide el taller y sin cambiar su funcionalidad,
+    #como optimizarias este codigo?
     if isinstance(formula, And):
         return And(*(distribute_or_over_and(c) for c in formula.conjuncts))
-    elif isinstance(formula, Or):
+    if isinstance(formula, Or):
         disjuncts = [distribute_or_over_and(d) for d in formula.disjuncts]
-        for i, d in enumerate(disjuncts):
-            if isinstance(d, And):
-                rest = disjuncts[:i] + disjuncts[i+1:]
-                A = rest[0] if len(rest) == 1 else Or(*rest)
-                new_conjuncts = [distribute_or_over_and(Or(A, c)) for c in d.conjuncts]
-                return And(*new_conjuncts)
+        and_index = next((i for i, d in enumerate(disjuncts) if isinstance(d, And)), None)
+        if and_index is not None:
+            and_formula = disjuncts[and_index]
+            rest = disjuncts[:and_index] + disjuncts[and_index + 1:]
+            return And(*[
+                distribute_or_over_and(
+                    Or(*(rest + [c]))
+                )
+                for c in and_formula.conjuncts
+            ])
         return Or(*disjuncts)
-    elif isinstance(formula, Not):
+    if isinstance(formula, Not):
         return Not(distribute_or_over_and(formula.operand))
     return formula
 
@@ -203,34 +244,74 @@ def flatten(formula: Formula) -> Formula:
           Igual para Or con sus disjuncts.
           Si al final solo queda 1 elemento, retornalo directamente.
     """
+    #if isinstance(formula, And):
+        #new_conjuncts = []
+        #for c in formula.conjuncts:
+           # flat_c = flatten(c)
+            #if isinstance(flat_c, And):
+               # new_conjuncts.extend(flat_c.conjuncts)
+           # else:
+                #new_conjuncts.append(flat_c)
+        #if len(new_conjuncts) == 1:
+            #return new_conjuncts[0]
+        #return And(*new_conjuncts)
+    #elif isinstance(formula, Or):
+        #new_disjuncts = []
+        #for d in formula.disjuncts:
+            #flat_d = flatten(d)
+            #if isinstance(flat_d, Or):
+               # new_disjuncts.extend(flat_d.disjuncts)
+            #else:
+                #new_disjuncts.append(flat_d)
+        #if len(new_disjuncts) == 1:
+           # return new_disjuncts[0]
+        #return Or(*new_disjuncts)
+    #elif isinstance(formula, Not):
+        #return Not(flatten(formula.operand))
+    #elif isinstance(formula, Implies):
+       # return Implies(flatten(formula.antecedent), flatten(formula.consequent))
+    #elif isinstance(formula, Iff):
+        #return Iff(flatten(formula.left), flatten(formula.right))
+    #return formula
+    
+    #Version final
+    #Prompt:Segun lo que pide el taller y sin cambiar su funcionalidad,
+    #como optimizarias este codigo? 
     if isinstance(formula, And):
-        new_conjuncts = []
+        items = []
         for c in formula.conjuncts:
-            flat_c = flatten(c)
-            if isinstance(flat_c, And):
-                new_conjuncts.extend(flat_c.conjuncts)
+            flat = flatten(c)
+            if isinstance(flat, And):
+                items.extend(flat.conjuncts)
             else:
-                new_conjuncts.append(flat_c)
-        if len(new_conjuncts) == 1:
-            return new_conjuncts[0]
-        return And(*new_conjuncts)
-    elif isinstance(formula, Or):
-        new_disjuncts = []
+                items.append(flat)
+        return items[0] if len(items) == 1 else And(*items)
+
+    if isinstance(formula, Or):
+        items = []
         for d in formula.disjuncts:
-            flat_d = flatten(d)
-            if isinstance(flat_d, Or):
-                new_disjuncts.extend(flat_d.disjuncts)
+            flat = flatten(d)
+            if isinstance(flat, Or):
+                items.extend(flat.disjuncts)
             else:
-                new_disjuncts.append(flat_d)
-        if len(new_disjuncts) == 1:
-            return new_disjuncts[0]
-        return Or(*new_disjuncts)
-    elif isinstance(formula, Not):
+                items.append(flat)
+        return items[0] if len(items) == 1 else Or(*items)
+
+    if isinstance(formula, Not):
         return Not(flatten(formula.operand))
-    elif isinstance(formula, Implies):
-        return Implies(flatten(formula.antecedent), flatten(formula.consequent))
-    elif isinstance(formula, Iff):
-        return Iff(flatten(formula.left), flatten(formula.right))
+
+    if isinstance(formula, Implies):
+        return Implies(
+            flatten(formula.antecedent),
+            flatten(formula.consequent)
+        )
+
+    if isinstance(formula, Iff):
+        return Iff(
+            flatten(formula.left),
+            flatten(formula.right)
+        )
+
     return formula
 
 
