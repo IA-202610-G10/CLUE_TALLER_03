@@ -40,9 +40,66 @@ def crear_kb() -> KnowledgeBase:
     syntek_corp    = Term("syntek_corp")
     sala_cultivos  = Term("sala_cultivos")
 
-    # === YOUR CODE HERE ===
+    #hechos
+    kb.add_fact(Predicate("doc_oficial_ausencia", (dra_santos,)))
+    kb.add_fact(Predicate("registro_conferencia", (director_vega,)))
 
-    # === END YOUR CODE ===
+    kb.add_fact(Predicate("sin_coartada", (tec_rios,)))
+    kb.add_fact(Predicate("sin_coartada", (asistente_mora,)))
+
+    kb.add_fact(Predicate("acceso", (tec_rios, sala_cultivos)))
+    kb.add_fact(Predicate("acceso", (asistente_mora, sala_cultivos)))
+
+    kb.add_fact(Predicate("recibio_pagos", (tec_rios, syntek_corp)))
+
+    kb.add_fact(Predicate("empresa_beneficiada", (syntek_corp,)))
+
+    kb.add_fact(Predicate("acusa", (asistente_mora, tec_rios)))
+
+    #reglas
+    x = Term("$X")
+    y = Term("$Y")
+    z = Term("$Z")
+
+    kb.add_rule(Rule(
+        [Predicate("doc_oficial_ausencia", (x,))],
+        Predicate("coartada_verificada", (x,))
+    ))
+
+    kb.add_rule(Rule(
+        [Predicate("registro_conferencia", (x,))],
+        Predicate("coartada_verificada", (x,))
+    ))
+
+    kb.add_rule(Rule(
+        [Predicate("coartada_verificada", (x,))],
+        Predicate("descartado", (x,))
+    ))
+
+    kb.add_rule(Rule(
+        [Predicate("recibio_pagos", (x, y)), Predicate("empresa_beneficiada", (y,))],
+        Predicate("conflicto_intereses", (x, y))
+    ))
+
+    kb.add_rule(Rule(
+        [Predicate("conflicto_intereses", (x, y))],
+        Predicate("motivo_economico", (x,))
+    ))
+
+    kb.add_rule(Rule(
+        [Predicate("acceso", (x, z))],
+        Predicate("acceso_en_momento", (x,))
+    ))
+
+    kb.add_rule(Rule(
+        [Predicate("sin_coartada", (x,)), Predicate("motivo_economico", (x,)), Predicate("acceso_en_momento", (x,))],
+        Predicate("culpable", (x,))
+    ))
+
+    kb.add_rule(Rule(
+        [Predicate("acceso_en_momento", (x,)), Predicate("acusa", (x, y))],
+        Predicate("denuncia_informada", (x, y))
+    ))
 
     return kb
 
